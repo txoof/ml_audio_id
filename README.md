@@ -37,4 +37,4 @@ The project duration is two weeks, broken down as follows:
 - A Git repository containing the project code, including Jupyter Notebooks, scripts, and supporting Markdown documents to explain the workflow, methodologies used, and the results obtained.
 
 ## Significance
-This project supports personal growth by enhancing skills related to AI, data science, and self-directed research. It offers hands-on experience with machine learning algorithms and showcases the development of a solution with direct, industry-applicable implications. Ultimately, the project serves as a practical exploration into leveraging technology to solve a real-world problem faced by radio listeners and music enthusiasts.
+This project supports personal growth by enhancing skills related to AI, data science, and self-directed research. It offers hands-on experience with machine learning algorithms and showcases the development of a solution with direct connection to the program.
