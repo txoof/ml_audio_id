@@ -29,5 +29,24 @@ Chapter 9: Unsupervised Learning
 
 ## Week 1
 
-### Day 1
+### 3 November, 2024
 
+#### K-Means Clustering 
+
+Attempted [K-Means Clustering](./kmeans_clustering.ipynb); this yields an 80% solution. About 1/5 of the tracks within the clusters are incorrectly categorized. Other types of clustering will be explored as well.
+
+#### DBSCAN Clustering
+
+Attempted [DBSCAN Clustering](./DBSCAN_clustering.ipynb); this yields very poor results. Everything is classified as "noise". A wide variety of epsilon and neighbor values were tried and no significant results were found.
+
+### 4 November, 2024
+
+#### Hierarchical Cluster Guided Labeling (HCGL)
+
+This method is based on the *Efficient Label Collection* paper. Results can be found in [HGCL Clustering](./clustering_HGCL.ipynb).
+
+
+
+## Work Log
+
+<iframe src="https://docs.google.com/spreadsheets/d/1Cv_RgunlO0N1p7FwOmZY59oMYiBCcdY5pVAlBwqEcnM/edit?gid=2044424266#gid=2044424266" width="600" height="400"></iframe>
