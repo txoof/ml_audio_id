@@ -1,15 +1,43 @@
 #!/usr/bin/env bash
 
-DEFAULT_HOST=192.168.1.9
-DEFAULT_PORT=22
-USER=media
-REMOTE_SOURCE="~/TRAINING_DATA/"
-LOCAL_DEST="TRAINING_DATA/RAW"
+# Default configurations
+DEFAULT_HOST="192.168.1.9"
+DEFAULT_PORT="22"
+DEFAULT_USER="media"
+DEFAULT_REMOTE_SOURCE="~/TRAINING_DATA/"
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-PROJECT_DIR=$(dirname $SCRIPT_DIR)
 
-HOST=${1:-$DEFAULT_HOST}
-PORT=${2:-$DEFAULT_PORT}
+# Derive script and project directories
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-rsync -avz -e "ssh -p $PORT" $USER@$HOST:$REMOTE_SOURCE $LOCAL_DEST
+DEFAULT_LOCAL_DEST="$PROJECT_DIR/TRAINING_DATA/RAW"
+
+# Parse arguments with defaults
+HOST="${1:-$DEFAULT_HOST}"
+PORT="${2:-$DEFAULT_PORT}"
+USER="${3:-$DEFAULT_USER}"
+REMOTE_SOURCE="${4:-$DEFAULT_REMOTE_SOURCE}"
+LOCAL_DEST="${5:-$DEFAULT_LOCAL_DEST}"
+
+# Show help message
+if [[ "$1" == "--help" ]]; then
+    echo "Usage: $0 [HOST] [PORT] [USER] [REMOTE_SOURCE] [LOCAL_DEST]"
+    echo "Default HOST: $DEFAULT_HOST"
+    echo "Default PORT: $DEFAULT_PORT"
+    echo "Default USER: $DEFAULT_USER"
+    echo "Default REMOTE_SOURCE: $DEFAULT_REMOTE_SOURCE"
+    echo "Default LOCAL_DEST: $DEFAULT_LOCAL_DEST"
+    exit 0
+fi
+
+# Log start
+echo "Starting rsync from $USER@$HOST:$REMOTE_SOURCE to $LOCAL_DEST on port $PORT..."
+
+# Execute rsync and check for success
+if rsync -avz -e "ssh -p $PORT" "$USER@$HOST:$REMOTE_SOURCE" "$LOCAL_DEST"; then
+    echo "Data synchronized successfully."
+else
+    echo "Error: Data synchronization failed." >&2
+    exit 1
+fi
