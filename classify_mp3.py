@@ -202,7 +202,6 @@ def main():
                     if current_tag != "None" and mp3.name not in classifications:
                         save_classification(mp3, current_tag, classifications, RECORD_FILE)
                         tagged_count += 1
-                        tagged_count += 1
                     running = False
                     waiting_for_key = False
                     pygame.quit()
@@ -220,12 +219,12 @@ def main():
                     # Handle fast-forward action only if the music is playing
                     if event.key == pygame.K_RIGHT:
                         if pygame.mixer.music.get_busy():
-                            new_pos = pygame.mixer.music.get_pos() / 1000 + 1
+                            new_pos = pygame.mixer.music.get_pos() / 1000 + 5
                             if new_pos < track_length:
                                 pygame.mixer.music.set_pos(new_pos)
                                 start_time -= 2
                             pygame.mixer.music.set_pos(new_pos)
-                            start_time -= 2
+                            # start_time -= 2
                     # Handle rewind action only if the music is playing
                     if event.key == pygame.K_LEFT:
                         if pygame.mixer.music.get_busy():
