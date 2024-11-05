@@ -3,6 +3,7 @@ TRAINING_DATA/
 *_*.json
 *.m3u
 *.pkl 
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
