@@ -101,3 +101,61 @@ The playlists generated through the improved labeling step can now be used for t
 The training sets for "music" (including mixed music & dialogue) and exclusive "dialogue" are roughly equal in size.
 
 This training data can now be used to develop and evaluate a the best training scheme for identifying audio clips. An additional corpus of ~30K unlabeled items are available for testing.
+
+### 6 November, 2024
+
+#### Combine various labeled sets
+
+Throughout the experimental phase, more and more of the training data was manually labeled. The manually labeled data can be combined to create an improved classifier. This was challenging because the assumptions and techniques used to create the label sets has evolved over through the development process. A stable label set has now been generated and combined with the extracted features.
+
+The data sets are combined with the [combined_label_data](./combine_labeled_data.ipynb) notebook.
+
+#### Develop ensemble classifiers
+
+The ensemble classifier is composed of a random forrest and gradient boosting classifier. The Gradient boosting classifier is weighted more heavily in the soft vote as it is slightly more accurate over all (higher f-1 score). The overall accuracy over the training and sample data is 92% for the ensemble. 
+
+The ensemble classifier can be found in the [classifier_ensemble](./classifier_ensemble.ipynb) notebook.
+
+A manual evaluation of 80 random tracks classified from novel data shows that the classifications were 97.5% accurate for the "Music" and "Both" categories and 97.5% accurate for the "Dialogue" category. This should be acceptable for the purposes of this project.
+
+```
+Unique labels in y: [1 0]
+Fitting 3 folds for each of 20 candidates, totalling 60 fits
+Random Forest Accuracy after Tuning: 0.90
+
+Random Forest Classification Report:
+               precision    recall  f1-score   support
+
+           0       0.93      0.89      0.91        44
+           1       0.88      0.92      0.90        39
+
+    accuracy                           0.90        83
+   macro avg       0.90      0.90      0.90        83
+weighted avg       0.90      0.90      0.90        83
+
+Fitting 3 folds for each of 20 candidates, totalling 60 fits
+Gradient Boosting Accuracy after Tuning: 0.92
+
+Gradient Boosting Classification Report:
+               precision    recall  f1-score   support
+
+           0       0.93      0.91      0.92        44
+           1       0.90      0.92      0.91        39
+
+    accuracy                           0.92        83
+   macro avg       0.92      0.92      0.92        83
+weighted avg       0.92      0.92      0.92        83
+
+Ensemble Classifier Accuracy after Tuning: 0.92
+
+Classification Report:
+               precision    recall  f1-score   support
+
+           0       0.93      0.91      0.92        44
+           1       0.90      0.92      0.91        39
+
+    accuracy                           0.92        83
+   macro avg       0.92      0.92      0.92        83
+weighted avg       0.92      0.92      0.92        83
+
+```
