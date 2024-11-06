@@ -174,21 +174,23 @@ def read_classifications(output_file):
     output_file = Path(output_file)
     
     classified_tracks = set()
-    classifications = {'M': 0, 'D': 0, 'B': 0}
+    classifications = {'Music': 0, 'Dialogue': 0, 'Both': 0}
     if output_file.exists():
         classified_df = pd.read_csv(output_file)
         classified_tracks.update(classified_df['Filename'].tolist())
         # Update the classification counts with existing data
         existing_classifications = classified_df['Classification'].value_counts().to_dict()
-        for key in ['M', 'D', 'B']:
+        for key in classifications.keys():
             if key in existing_classifications:
                 classifications[key] += existing_classifications[key]
                 
     total_classifications = sum(classifications.values())
-
+    dialog_pct = 0
+    music_both_pct = 0
+    
     if total_classifications > 0:
-        dialog_pct = classifications["D"] / total_classifications
-        music_both_pct = (classifications["M"] + classifications["B"]) / total_classifications    
+        dialog_pct = classifications["Dialogue"] / total_classifications
+        music_both_pct = (classifications["Music"] + classifications["Both"]) / total_classifications    
     return classifications, {'Music & Both': music_both_pct, 'Dialogue': dialog_pct}
 
 # +
@@ -224,6 +226,9 @@ def read_classifications(output_file):
 # import random
 # import IPython.display as ipd
 # import time
+# from pathlib import Path
+
+
 # def play_and_classify_m3u(m3u_file, output_file=None, num_tracks=20):
 #     """
 #     Play a specified or random number of items from an M3U file, ask user to classify as M, D, B, 
@@ -274,6 +279,19 @@ def read_classifications(output_file):
 #     num_tracks = min(num_tracks, len(tracks_to_play))
     
 #     # Open output file for appending classifications
+#     classification_map = {
+#         'M': 'Music',
+#         'B': 'Both',
+#         'D': 'Dialogue',
+#         'Q': 'Quit',
+#     }
+
+#     classifications = {
+#         'B': 0,
+#         'M': 0,
+#         'D': 0
+#     }
+    
 #     with output_file.open('a') as out_file:
 #         # Play each track and ask for classification
 #         for i in range(num_tracks):
@@ -286,7 +304,7 @@ def read_classifications(output_file):
             
 #             # Get user classification (M, D, B, or Q to quit)
 #             classification = None
-#             while classification not in ['M', 'D', 'B', 'Q']:
+#             while classification not in classification_map.keys():
 #                 classification = input("Classify this track as M (Music), D (Dialogue), B (Both), or Q (Quit): ").upper()
 #                 if classification == 'Q':
 #                     print("Quitting...")
@@ -295,7 +313,7 @@ def read_classifications(output_file):
 #             # Record classification if not quitting
 #             if classification != 'Q':
 #                 classifications[classification] += 1
-#                 out_file.write(f"{track},{classification}\n")
+#                 out_file.write(f"{track},{classification_map[classification]}\n")
             
 #             # Pause between tracks
 #             time.sleep(1)
