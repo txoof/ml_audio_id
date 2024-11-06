@@ -90,11 +90,13 @@ options:
 
 #### ['classify_mp3.py](./classify_mp3.py)
 
-Launch an interface for manually classify mp3 tracks into three categories:
+Launch an interface for manually labeling mp3 tracks into three categories:
 
 - Dialogue (containing primarily radio dialogue)
 - Music (containing primarily music)
 - Both (containing both dialogue and music)
+
+Classified files are stored in`./track_classifications.json` by default. This can be used as "ground truth" for labeling datasets.
 
 ```BASH
 usage: classify_mp3.py [-h] [-l LOG_PATH] [--record_file RECORD_FILE] [-v] [--log_to_file] mp3_directory
