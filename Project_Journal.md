@@ -159,3 +159,56 @@ Classification Report:
 weighted avg       0.92      0.92      0.92        83
 
 ```
+
+### 7 November, 2024
+
+#### Next steps
+
+I have experimented heavily with different ensemble models. With some guidance from tutorials and Chat GPT, I've fiddled with hyper parameters and have a pretty successful classifier. It is > 95% accurate with novel data.
+
+I know that I've just grazed the surface of this topic and want to better understand how these algorithms work, and see if there are potentially other algorithms that are more effective that I haven't explored. 
+
+To that end, I've decided to work through the first few chapters of *Hands on Machine Learning with Scikit-Learn , Keras & TensorFlow*. I plan to work some of the sample exercises and see if I can gain some insights on what I have tried up to this point and deepen my understanding.  
+
+The rest of this project period will include a summary of my notes, exercises that I complete and any ideas that I have to improve the work that I have done up to this point.
+
+#### Chapter 1
+
+Key points: 
+
+- ML is essentially teaching computers by example from data.
+- ML really shines for tasks that are complex and are too difficult to define through hand-crafted rules
+- Data is king. More data typically produces higher quality models. Data poverty is a real problem and leads to models that behave erratically. There are lots of ways to fudge slim data sets this that work relatively well like using train-dev data sets that are not 100% representative of production data, but "close enough."
+
+#### Chapter 2 - California Housing Project
+
+The ML Project Checklist:
+
+- [ ] 1. Frame the problem and look at the big picture.
+- [ ] 2. Get the data.
+- [ ] 3. Explore the data to gain insights
+- [ ] 4. Prepare the data to better expose the underlying data patterns to machine learning algorithms.
+- [ ] 5. Explore many different models and shortlist the best ones.
+- [ ] 6. Fine-tune your models and combine them into a great solution.
+- [ ] 7. Present your solution.
+- [ ] 8. Launch, monitor, and maintain your sy system.
+
+##### Frame The Problem
+
+- **Objective:** predict a district's median housing price in support a downstream ML system that supports investment decisions.
+- **Current State:** Prices are currently estimated manually using complex rules. Predictions can be off by up to 30%
+- **Data Set:** Census data contains median housing prices for thousands of districts including other data features.
+- **Performance Measure:** Suggested RMSE (root mean square error).
+- **Assumptions Check:** E.g. will downstream systems use the exact prices, or bin them into categories? Do calculations need to be precise, or "close enough"?
+
+\[
+\text{RMSE}(X, h) = \sqrt{\frac{1}{m} \sum_{i=1}^{m} \left(h(x^{(i)}) - {y}^{(i)}\right)^2}
+\]
+- $m$ is the number of instances of the data set being measured
+- $x^{(i)}$ is a vector of all the feature values of the $i^th$ instance in teh data
+- $y^{(i)}$ is the label (desired output)
+- $X$ is a matrix containing all the feature values (excluding labels); one row per instance and the $i^th$ row is equal to the transpose of $x^{(i)}$
+- $h$ is the system prediction function
+
+##### Get the Data
+
