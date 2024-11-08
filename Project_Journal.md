@@ -35,19 +35,104 @@ Chapter 9: Unsupervised Learning
 
 ### 3 November, 2024
 
+#### Feature Extraction
+
+Determining which features to extract is challenging. I need to learn about different methods for identifying audio features that can differentiate between spoken content and musical content.
+
+I've moved the feature extraction into a the [audio_features](./audio_features.ipynb) notebook to make it easier to re-use this in a standardized way in the future. I've settled on the following features:
+
+Extract the following audio audio features:
+
+- MFCCs: Mel-Frequency Cepstral Coefficients (13 features)
+    - widely used in speech and audio processing; measure the power spectrum and capture tonal and timbral features
+- ZCR: Zero-Corssing Rate (1 feature)
+    - how often the signal amplitude switches across zero; can be used for identifying harmonic features
+- Spectral Contrast: mean of each 7 spectral bands (7 features)
+    - measures difference in amplitude across different frequencies; music tends to have richer harmonic structure which is reflected in spectral contrast
+- Chroma Features: mean of chroma bins (12 features)
+    - intensity of the audio signal in 12 pitch classes common in western music; reflects tonal content common in music, but lacking in dialogue
+- RMS Energy: Root Mean Square Energy (1 feature)
+    - average power of the audio signal over time also known as "loudness"; speech tends to be more dynamic in this domain
+- Spectral Rolloff: (1 feature)
+    - frequency below which 85% of total spectral energy is contained; music tends to have a broader frequency range
+
+After extracting features, the PCA variance was checked to try to find a cutoff point for the features. The hope was this would help prevent over fit of the data.
+
+![PCA Variance](./assets/PCA_Variance.png)
+
 #### K-Means Clustering 
 
 Attempted [K-Means Clustering](./kmeans_clustering.ipynb); this yields an 80% solution. About 1/5 of the tracks within the clusters are incorrectly categorized. Other types of clustering will be explored as well.
 
+I was dissatisfied with K-Means clustering and decided to try t-SNE clustering. I'm not very familiar with how this works or how to tune it. The results of my fiddling can be seen below.
+
+Experimenting with different cluster sizes yields a value of 3 clusters with a silhouette score of 0.16. This is quite low overall. The t-SNE visualization shows some separation of the clusters, but also considerable overlap.
+
+![t-SNE Clusters](./assets/t-SNE_clusters.png)
+
 #### DBSCAN Clustering
 
-Attempted [DBSCAN Clustering](./DBSCAN_clustering.ipynb); this yields very poor results. Everything is classified as "noise". A wide variety of epsilon and neighbor values were tried and no significant results were found.
+After unsatisfying clustering results using K-Means, I add additional features:
+
+- Spectral Bandwidth:
+    - width of spectral range; music typically has a wider bandwidth
+- Spectral Centroid:
+    - center of mass in the spectrum and brightness of sound; music typically has a hihger brightness
+<!-- - Tempo:
+    - rythmic structure -->
+- HNR: Harmonic-to-Noise-Ratio
+    - speech has more harmonic structure
+
+![PCA Variance with Additional Features](./assets/PCA_Variance_additional_features.png)
+
+Based on this graph, I chose to cutoff at 20 components as this contains roughly 80% of the feature data.
+
+Attempted [DBSCAN Clustering](./DBSCAN_clustering.ipynb); this yields very poor results. Everything is classified as "noise". A wide variety of epsilon and neighbor values were tried and no significant results were found. I tried running DBSCAN with a variety of different parameters to try to find a DBSCAN cluster that would yield any significant clustering. 
+
+I primarily varied epsilon over the range of 0.01 to 3 with 30 steps and min_samples over the range 3..9 (inclusive).
+
+Almost all of the samples are identified as noise. Below is a typical clustering output for `eps=0.06157894736842105; min_samples=2`
+
+![Typical DBSCAN Output](./assets/DBSCAN_typical.png)
+
+With my current level of understanding of DBSCAN, this route of clustering data is not worth following any further.
 
 ### 4 November, 2024
 
+#### Classification Tool
+
+I need a way to verify the results and to build a labeled set. To help out with that, I built an mp3 player with simple controls that outputs a JSON file with classifications I can use later: [classify_mp3](./classify_mp3.py).
+
 #### Hierarchical Cluster Guided Labeling (HCGL)
 
-This method is based on the *Efficient Label Collection* paper. Testing results can be found in [HGCL Clustering](./clustering_HGCL_testing.ipynb). The `ward` type linkage appears to be the most effective at identifying tracks that are of type "music" and "both".
+This method is based on the *Efficient Label Collection* paper. Testing results can be found in [HGCL Clustering](./clustering_HGCL_testing.ipynb). 
+
+This method was helpful in initially grouping tracks by feature. From here I could create m3u playlists and do some random sampling of the files to verify that the clusters were largely correct. The `ward` and `median` type linkage appears to be the most effective at identifying tracks that are of type "dialogue", "music" and "both".
+
+![Ward Dendrogram](./assets/dendrogram_ward.png)
+![Median Dendrogram](./assets/dendrogram_median.png)
+
+I ultimately decided to use the `ward` type with a cutoff at 200100 as it has three distinct groupings. One definite group in the orange segment and two similar groups in the green segment. I believe that this represents the "music" (orange) and "dialogue"/"both" (green) categories.
+
+The cutoff at 200100 should preserve those groupings.
+
+Examining the clusters manually shows that orange cluster contains about 67% "Music" and "Both" and the green cluster contains 67% dialogue. This is reasonably helpful, but not good enough to divide the training sets
+
+```Python
+play_and_classify_m3u('orange_median.m3u', num_tracks=1)
+Classification Ratios:
+M: 0.21
+D: 0.33
+B: 0.46
+Music & Both: 67.3076923076923; Dialogue: 32.69230769230769
+
+play_and_classify_m3u('green_median.m3u', num_tracks=1)
+Classification Ratios:
+M: 0.00
+D: 0.67
+B: 0.33
+Music & Both: 33.33333333333333; Dialogue: 66.66666666666666
+```
 
 Using a random forest with labeled data to improve accuracy is the next task. Once the classification has been improved, verifying the quality of the classifier is the next step.
 
@@ -109,6 +194,8 @@ This training data can now be used to develop and evaluate a the best training s
 Throughout the experimental phase, more and more of the training data was manually labeled. The manually labeled data can be combined to create an improved classifier. This was challenging because the assumptions and techniques used to create the label sets has evolved over through the development process. A stable label set has now been generated and combined with the extracted features.
 
 The data sets are combined with the [combined_label_data](./combine_labeled_data.ipynb) notebook.
+
+I've realized that most of the classification was not done through clustering, but rather through iteratively labeling data. My clustering attempts were not terribly successful.
 
 #### Develop ensemble classifiers
 
