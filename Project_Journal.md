@@ -168,9 +168,17 @@ I have experimented heavily with different ensemble models. With some guidance f
 
 I know that I've just grazed the surface of this topic and want to better understand how these algorithms work, and see if there are potentially other algorithms that are more effective that I haven't explored. 
 
-To that end, I've decided to work through the first few chapters of *Hands on Machine Learning with Scikit-Learn , Keras & TensorFlow*. I plan to work some of the sample exercises and see if I can gain some insights on what I have tried up to this point and deepen my understanding.  
+To that end, I've decided to work through the first few chapters of *Hands on Machine Learning with Scikit-Learn , Keras & TensorFlow* (*HOML*). I plan to work some of the sample exercises and see if I can gain some insights on what I have tried up to this point and deepen my understanding.  
 
 The rest of this project period will include a summary of my notes, exercises that I complete and any ideas that I have to improve the work that I have done up to this point.
+
+#### Setting up a Python 3.9.17 Environment
+
+*HOML* has an extensive list of python package requirements; some appear to be pinned to versions that are incompatible with Python 3.12. I narrowed down the latest version of python that should work to 3.9.17, but ran into an issue with creating a virtual environment for that project.
+
+There were various python environment snags that took several hours to unwind. This primarily included diagnosing issues with PyEnv, upgrading various system components and eventually culminating in writing a script to manage virtual environments in the future. 
+
+The script will be useful for setting up future Python projects and can be imported as a git submodule. It can be found at [pyenv_utilities](https://github.com/txoof/pyenv_utilities/blob/main/README.md).
 
 #### Chapter 1
 
@@ -209,6 +217,10 @@ The ML Project Checklist:
 - $y^{(i)}$ is the label (desired output)
 - $X$ is a matrix containing all the feature values (excluding labels); one row per instance and the $i^th$ row is equal to the transpose of $x^{(i)}$
 - $h$ is the system prediction function
+
+### 8 November, 2024
+
+#### Chapter 2 Continued
 
 ##### Get the Data
 
