@@ -118,7 +118,7 @@ The ensemble classifier can be found in the [classifier_ensemble](./classifier_e
 
 A manual evaluation of 80 random tracks classified from novel data shows that the classifications were 97.5% accurate for the "Music" and "Both" categories and 97.5% accurate for the "Dialogue" category. This should be acceptable for the purposes of this project.
 
-```
+```text
 Unique labels in y: [1 0]
 Fitting 3 folds for each of 20 candidates, totalling 60 fits
 Random Forest Accuracy after Tuning: 0.90
