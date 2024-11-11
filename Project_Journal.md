@@ -60,9 +60,11 @@ After extracting features, the PCA variance was checked to try to find a cutoff 
 
 ![PCA Variance](./assets/PCA_Variance.png)
 
-#### K-Means Clustering 
+#### K-Means Clustering
 
-Attempted [K-Means Clustering](./kmeans_clustering.ipynb); this yields an 80% solution. About 1/5 of the tracks within the clusters are incorrectly categorized. Other types of clustering will be explored as well.
+Attempted [K-Means Clustering](./kmeans_clustering.ipynb); this yields midling results. A random sampling of tracks from each cluster shows that clusters 0 and 1 are reasonably well classified as tracks containing some musical elements, but at least 1/5 of all checked samples in both groups is contains only dialogue. Cluster 2 similarly is about 80% only dialogue, but after several rounds of random sampling, at least one track in each sample contains music. This is insufficient for the purposes of this project.
+
+#### t-SNE Clustering
 
 I was dissatisfied with K-Means clustering and decided to try t-SNE clustering. I'm not very familiar with how this works or how to tune it. The results of my fiddling can be seen below.
 
@@ -307,7 +309,109 @@ The ML Project Checklist:
 
 ### 8 November, 2024
 
+For the remaining portion of Chapter 2, all of my work can be found in the [chapter 02 Workbook](./handson_exercises/chapter_02_workbook.ipynb) Jupyter notebook.
+
 #### Chapter 2 Continued
 
 ##### Get the Data
+
+Pull the data down as a tarball from github and load into a pandas dataframe.
+
+##### EDA
+
+Take a look at the data and generate some histograms to help with observations
+
+`housing.describe()`:
+
+|       |   longitude |    latitude |   housing_median_age |   total_rooms |   total_bedrooms |   population |   households |   median_income |   median_house_value |
+|:------|------------:|------------:|---------------------:|--------------:|-----------------:|-------------:|-------------:|----------------:|---------------------:|
+| count | 20640       | 20640       |           20640      |      20640    |        20433     |     20640    |     20640    |     20640       |                20640 |
+| mean  |  -119.57    |    35.6319  |              28.6395 |       2635.76 |          537.871 |      1425.48 |       499.54 |         3.87067 |               206856 |
+| std   |     2.00353 |     2.13595 |              12.5856 |       2181.62 |          421.385 |      1132.46 |       382.33 |         1.89982 |               115396 |
+| min   |  -124.35    |    32.54    |               1      |          2    |            1     |         3    |         1    |         0.4999  |                14999 |
+| 25%   |  -121.8     |    33.93    |              18      |       1447.75 |          296     |       787    |       280    |         2.5634  |               119600 |
+| 50%   |  -118.49    |    34.26    |              29      |       2127    |          435     |      1166    |       409    |         3.5348  |               179700 |
+| 75%   |  -118.01    |    37.71    |              37      |       3148    |          647     |      1725    |       605    |         4.74325 |               264725 |
+| max   |  -114.31    |    41.95    |              52      |      39320    |         6445     |     35682    |      6082    |        15.0001  |               500001 |
+
+**Observations**:
+
+- *total_bedrooms* is has rows that are incomplete
+- *ocean_proximitiy* is categorical
+- *median_house_value* is capped at $500K
+- *median_income* is scaled and capped. Values are expressed in units of $10k
+- right skew on several features
+
+##### Create a Test Set
+
+Create a test set and hold it in embargo to prevent *data snooping* bias. The best way to do this is to use SciKit's `train_test_split` function. This creates stable sets that are consistent over multiple runs to prevent contaminating the training set with test data and accidentally training the model on test items.
+
+##### Think About Bias
+
+In our problem space, the experts in the downstream forecasting group tell us that median income is very important in predicting median  house prices. *Stratifying* the sample on this might be a good  to ensure that this is captured is captured in the training/test set. Use `pd.cut()` to create a new category that bins median income into five categories.
+
+```Py
+housing["income_cat"] = pd.cut(housing["median_income"], 
+                               bins=[0., 1.5, 3.0, 4.5, 6., np.inf], 
+                               labels=[1, 2, 3, 4, 5])
+```
+
+*Stratified sampling* can now be done on these groupings.
+
+![Income Category Plot](./assets/homl_ch02_income_plot.png)
+
+SciKit really has you covered. It does it all!
+
+```Py
+strat_training_set, strat_test_set = train_test_split(
+    housing,
+    test_size=0.2,
+    stratify=housing["income_cat"],
+    random_state=42
+)
+```
+
+Comparing the stratified test set versus a randomly split test set.
+
+|   Income Category |   Overall % |   Stratified % |   Random % |   Strat. Error % |   Rand. Error % |
+|------------------:|------------:|---------------:|-----------:|-----------------:|----------------:|
+|                 1 |        3.98 |           4    |       4.24 |             0.36 |            6.45 |
+|                 2 |       31.88 |          31.88 |      30.74 |            -0.02 |           -3.59 |
+|                 3 |       35.06 |          35.05 |      34.52 |            -0.01 |           -1.53 |
+|                 4 |       17.63 |          17.64 |      18.41 |             0.03 |            4.42 |
+|                 5 |       11.44 |          11.43 |      12.09 |            -0.08 |            5.63 |
+
+The differences between the randomized and stratified sets are are significant and meaningful in all the categories.
+
+### 11 November, 2024
+
+#### Yet more Chapter 2
+
+##### Explore and Visualize the Data
+
+Fortunately the housing data has Lat/Lon coordinates, so it's trivial to plot them on an XY scatter plot. The population can be mapped to the dot size and the color can be mapped to the price value.
+
+![Housing Value Map](./assets/homl_ch02_housing_density_value_map.png)
+
+A Pearson Correlation (*r* value) can be calculated for the data as well using the `.corr()` method. These values add depth to the plot. High value houses are highly correlated with median income. So, red dots equal expensive houses for rich people.
+
+|                    |   median_house_value |
+|:-------------------|---------------------:|
+| median_house_value |            1         |
+| median_income      |            0.68838   |
+| total_rooms        |            0.137455  |
+| housing_median_age |            0.102175  |
+| households         |            0.0714265 |
+| total_bedrooms     |            0.0546351 |
+| population         |           -0.0201529 |
+| longitude          |           -0.0508589 |
+| latitude           |           -0.139584  |
+
+![Correlation Matrix Plot](./assets/homl_ch02_corr_matrix_plot.png)
+
+From the plots, it looks like median_income is the best predictor of value. This matches the table. 
+
+![Income vs Value](./assets/homl_ch02_corr_income_value_plot.png)
+
+The income cap that the data preparation team pointed out is really apparent making a horizontal cluster at 500k. There are some other fainter horizontal clusters at 450k and maybe just below 300k. I don't know what causes these.
 
