@@ -1,13 +1,12 @@
 # Final Report: Machine Learning-based Audio Classification Project
 
 ## Table of Contents
+
 1. [Project Overview](#project-overview)
 2. [Technical Approach](#technical-approach)
 3. [Challenges and Solutions](#challenges-and-solutions)
 4. [Results and Evaluation](#results-and-evaluation)
 5. [Future Work](#future-work)
-
----
 
 ## Project Overview
 This project aimed to develop a machine learning-based system for classifying audio samples into three categories: "Music," "Dialogue," or "Both." The primary objective was twofold: to gain hands-on experience with machine learning techniques and to create a foundation for further analysis of musical content within tracks identified as containing music. Ultimately, the music-containing tracks can be sent to an online identification service for more detailed classification.
