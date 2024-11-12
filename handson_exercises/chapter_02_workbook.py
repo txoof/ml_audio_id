@@ -22,6 +22,8 @@ import urllib.request
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, StandardScaler
 
 
 from ipyleaflet import Map, basemaps
@@ -174,6 +176,8 @@ strat_train_set
 
 housing = strat_train_set.copy()
 
+# ## Explore and Visualize the Data to Gain Insights
+
 housing.plot(kind="scatter", 
              x="longitude", 
              y="latitude", 
@@ -181,7 +185,7 @@ housing.plot(kind="scatter",
              alpha=0.2)
 plt.show()
 
-# #### Observations
+# ### Observations
 #
 # - Most of the population lives along the coast
 # - There's a huge cluster around 38N, 122W (San Francisco?) and 34N, 118W (Los Angeles?)
@@ -213,7 +217,7 @@ corr_matrix = housing.drop(columns=["ocean_proximity"]).corr()
 print(corr_matrix["median_house_value"].sort_values(ascending=False).to_markdown())
 # -
 
-# #### More Correlation Visualization
+# ### More Correlation Visualization
 #
 # We're looking for values that might predict the value of a house. The matrix below plots all the values against all the other values. Looking across the median_house_value row, it looks like median_income and possibly total_rooms are helpful indicators.
 #
@@ -229,5 +233,255 @@ housing.plot(kind="scatter",
              alpha=0.1,
              grid=True)
 plt.show()
+
+# ### A little more EDA and Experimentation
+#
+# It might be useful to look at rooms/house and some other values and compute the correlation table again.
+
+housing["rooms_per_house"] = housing["total_rooms"] / housing["households"]
+housing["bedrooms_ratio"] = housing["total_bedrooms"] / housing["total_rooms"] 
+housing["people_per_house"] = housing["population"] / housing["households"]
+
+corr_matrix = housing.drop(columns=["ocean_proximity"]).corr()
+print(corr_matrix["median_house_value"].sort_values(ascending=True).to_markdown())
+
+# ## Prepare the Data for ML
+#
+# Separate the labels from the training data.
+
+# +
+strat_train_set = pd.read_csv("./datasets/strat_train_set-241111.csv")
+strat_test_set = pd.read_csv("./datasets/strat_test_set-241111.csv")
+
+# 
+housing = strat_train_set.drop("median_house_value", axis=1)
+housing_labels = strat_test_set["median_house_value"].copy()
+# -
+
+# Identify null rows
+#
+
+null_rows_idx = housing.isnull().any(axis=1)
+housing.loc[null_rows_idx].head()
+
+# Use and imputer to apply the median value for each missing feature to make sure that the arrays are the same size for all the data.
+
+# +
+# get the median value
+median = housing["total_bedrooms"].median()
+
+# fill in the missing values with the imputed value (median total_bedrooms)
+housing["total_bedrooms"].fillna(median, inplace=True)
+
+# the above method appears to be deprecated; instead it might make more sense to do:
+# housing.loc[:, "total_bedrooms"] = housing["total_bedrooms"].fillna(median)
+# -
+
+# is this an alternative to the above? or just another way to do it?
+imputer = SimpleImputer(strategy="median")
+imputer.strategy
+
+
+# imputers only work on numerical values; extract just the number type features
+housing_num = housing.select_dtypes(include=[np.number])
+
+imputer.fit(housing_num)
+print(imputer.statistics_)
+print(housing_num.median().values)
+
+
+X = imputer.transform(housing_num)
+
+imputer.feature_names_in_
+
+housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=housing_num.index)
+
+
+
+housing_tr.loc[null_rows_idx].head()  # not shown in the book
+
+# ### Handle the Text/Categorical Features
+#
+# It's logical to encode these to numerical values so we can do more mathy things with them
+
+housing_cat = housing[["ocean_proximity"]]
+print(housing_cat.value_counts().to_markdown())
+
+ordinal_encoder = OrdinalEncoder()
+housing_cat_encoded = ordinal_encoder.fit_transform(housing_cat)
+housing_cat_encoded[:8]
+
+ordinal_encoder.categories_
+
+# +
+cat_encoder = OneHotEncoder()
+
+housing_cat_1hot = cat_encoder.fit_transform(housing_cat)
+
+housing_cat_1hot
+# -
+
+# convert to full array because ??? REASONS ???
+housing_cat_1hot.toarray()
+
+cat_encoder.categories_
+
+df_test = pd.DataFrame({"ocean_proximity": ["INLAND", "NEAR BAY", "FooBar", "SPAM", "Ham"]})
+print(pd.get_dummies(df_test).to_markdown())
+
+
+
+# ## Feature Scaling
+#
+# Scaling features into a range that is appropriate for the ML approach. Typically this means scaling between -1 and 1, or 0 and 1
+
+std_scaler = StandardScaler()
+housing_num_std_scaled = std_scaler.fit_transform(housing_num)
+
+print(housing_num.head(10).to_markdown())
+
+for i in range (0, 10):
+    print(housing_num_std_scaled[i])
+
+# ### Custom Transformers
+#
+# If you don't find just the right transformer, you can write your own class. As long as the class suports `fit` and `transform` methods, it will work. This is great if you really know what you're looking for because you can use pretty much functions or methods you can get your hands on. The one below (borrowed from the text) uses the `rbf_kernel` I can't say that I entirely understand how it works, but I see the potential here.
+
+# ### Pipelines
+#
+# Rather than performing all the steps one at a time and storing the results in variables, and recombining them manually, SciKit can build a pipeline for you!
+
+# +
+import sklearn
+sklearn.set_config(display="diagram")
+
+from sklearn.pipeline import Pipeline
+    
+num_pipeline = Pipeline([
+    ("impute", SimpleImputer(strategy="median")),
+    ("standardize", StandardScaler()),
+])
+num_pipeline
+
+# +
+from sklearn.pipeline import make_pipeline
+
+num_pipeline = make_pipeline(SimpleImputer(strategy="median"), StandardScaler())
+num_pipeline
+
+# +
+from pathlib import Path
+import pandas as pd
+from pandas.plotting import scatter_matrix
+import tarfile
+import urllib.request
+
+import numpy as np
+from sklearn.compose import ColumnTransformer
+from sklearn.compose import make_column_selector, make_column_transformer
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.pipeline import make_pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler #, OrdinalEncoder
+from sklearn.model_selection import train_test_split
+
+
+
+from sklearn.cluster import KMeans
+
+def load_housing_data():
+    tarball_path = Path("datasets/housing.tgz")
+    if not tarball_path.is_file():
+        Path("datasets").mkdir(parents=True, exist_ok=True)
+        url = "https://github.com/ageron/data/raw/main/housing.tgz"
+        urllib.request.urlretrieve(url, tarball_path)
+        with tarfile.open(tarball_path) as housing_tarball:
+            housing_tarball.extractall(path="datasets")
+    return pd.read_csv(Path("datasets/housing/housing.csv"))
+
+class ClusterSimilarity(BaseEstimator, TransformerMixin):
+    def __init__(self, n_clusters=10, gamma=1.0, random_state=None):
+        self.n_clusters = n_clusters
+        self.gamma = gamma
+        self.random_state = random_state
+
+    def fit(self, X, y=None, sample_weight=None):
+        self.kmeans_ = KMeans(self.n_clusters, n_init=10,
+                              random_state=self.random_state)
+        self.kmeans_.fit(X, sample_weight=sample_weight)
+        return self  # always return self!
+
+    def transform(self, X):
+        return rbf_kernel(X, self.kmeans_.cluster_centers_, gamma=self.gamma)
+    
+    def get_feature_names_out(self, names=None):
+        return [f"Cluster {i} similarity" for i in range(self.n_clusters)]
+
+def column_ratio(X):
+    return X[:, [0]] / X[:, [1]]
+
+def ratio_name(function_transformer, feature_names_in):
+    return ["ratio"]  # feature names out
+
+def ratio_pipeline():
+    return make_pipeline(
+        SimpleImputer(strategy="median"), # (A) impute missing values
+        FunctionTransformer(column_ratio, feature_names_out=ratio_name), # (C) Create ratio features
+        StandardScaler()) # (F) scale all the values
+
+# load unprocessed data
+housing = load_housing_data()
+
+housing["income_cat"] = pd.cut(housing["median_income"], 
+                               bins=[0., 1.5, 3.0, 4.5, 6., np.inf], 
+                               labels=[1, 2, 3, 4, 5])
+# split into train/test split
+train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
+
+strat_train_set, strat_test_set = train_test_split(
+    housing,
+    test_size=0.2,
+    stratify=housing["income_cat"],
+    random_state=42)
+
+# drop the income-cat column
+for set_ in (strat_test_set, strat_train_set):
+    set_.drop("income_cat", axis=1, inplace=True)
+
+housing_labels = strat_train_set["median_house_value"].copy()
+
+housing = strat_train_set.drop("median_house_value", axis=1)
+
+cat_pipeline = make_pipeline(
+    SimpleImputer(strategy="most_frequent"), # (A) impute missing values
+    OneHotEncoder(handle_unknown="ignore")) # (B) encode categorical data as binary one-hot columns
+
+
+# (E) transform "long-tail" data into more gaussian (normal) distributions
+log_pipeline = make_pipeline(
+    SimpleImputer(strategy="median"), #(A) impute missing values
+    FunctionTransformer(np.log, feature_names_out="one-to-one"),
+    StandardScaler()) # (F) scale all the values
+cluster_simil = ClusterSimilarity(n_clusters=10, gamma=1., random_state=42)
+default_num_pipeline = make_pipeline(SimpleImputer(strategy="median"), # (A) impute missing values
+                                     StandardScaler()) # (F) scale all the values
+preprocessing = ColumnTransformer([
+        ("bedrooms", ratio_pipeline(), ["total_bedrooms", "total_rooms"]),
+        ("rooms_per_house", ratio_pipeline(), ["total_rooms", "households"]),
+        ("people_per_house", ratio_pipeline(), ["population", "households"]),
+        ("log", log_pipeline, ["total_bedrooms", "total_rooms", "population",
+                               "households", "median_income"]),
+        ("geo", cluster_simil, ["latitude", "longitude"]),
+        ("cat", cat_pipeline, make_column_selector(dtype_include=object)),
+    ],
+    remainder=default_num_pipeline)  # one column remaining: housing_median_age
+# -
+
+housing_prepared = preprocessing.fit_transform(housing)
+housing_prepared.shape
+
+preprocessing.get_feature_names_out()
 
 
