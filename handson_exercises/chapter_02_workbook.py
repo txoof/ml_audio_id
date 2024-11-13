@@ -434,11 +434,12 @@ def ratio_pipeline():
 # load unprocessed data
 housing = load_housing_data()
 
+# add an income_cat column
 housing["income_cat"] = pd.cut(housing["median_income"], 
                                bins=[0., 1.5, 3.0, 4.5, 6., np.inf], 
                                labels=[1, 2, 3, 4, 5])
-# split into train/test split
-train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
+# split into stratified train/test split
+# train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
 
 strat_train_set, strat_test_set = train_test_split(
     housing,
@@ -450,8 +451,10 @@ strat_train_set, strat_test_set = train_test_split(
 for set_ in (strat_test_set, strat_train_set):
     set_.drop("income_cat", axis=1, inplace=True)
 
+
 housing_labels = strat_train_set["median_house_value"].copy()
 
+# WHOA! PAY ATTENTION HERE!
 housing = strat_train_set.drop("median_house_value", axis=1)
 
 cat_pipeline = make_pipeline(
