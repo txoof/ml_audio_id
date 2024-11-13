@@ -398,7 +398,7 @@ A Pearson Correlation (*r* value) can be calculated for the data as well using t
 |                    |   median_house_value |
 |:-------------------|---------------------:|
 | median_house_value |            1         |
-| median_income      |            0.68838   |
+| **median_income**      |            0.**68838**   |
 | total_rooms        |            0.137455  |
 | housing_median_age |            0.102175  |
 | households         |            0.0714265 |
@@ -415,3 +415,317 @@ From the plots, it looks like median_income is the best predictor of value. This
 
 The income cap that the data preparation team pointed out is really apparent making a horizontal cluster at 500k. There are some other fainter horizontal clusters at 450k and maybe just below 300k. I don't know what causes these.
 
+Doing a little more exploration, creating calculated columns for rooms_per_house, bedroom_ratio and people_per_house yields some interesting results:
+
+|                    |   median_house_value |
+|:-------------------|---------------------:|
+| **bedrooms_ratio**     |           **-0.256397**  |
+| latitude           |           -0.139584  |
+| longitude          |           -0.0508589 |
+| people_per_house   |           -0.0382244 |
+| population         |           -0.0201529 |
+| total_bedrooms     |            0.0546351 |
+| households         |            0.0714265 |
+| housing_median_age |            0.102175  |
+| **total_rooms**        |            **0.137455**  |
+| **rooms_per_house**    |            **0.143663**  |
+| median_income      |            0.68838   |
+| median_house_value |            1         |
+
+There's a moderate negative correlation between the value of the house and the bedroom_ratio. As the ratio decreases, the value increases. There's also a weak correlation between the rooms_per_house and value as well as total_rooms and value. As those increase, so does the house value. Those features may be of interest in the training.
+
+#### Prepare the Data for ML Algorithms
+
+##### Clean the Data
+
+ML Algorithms like data that has no gaps. This means that rows containing null values likely need to be dropped or patched up. There are several strategies for doing this. The text suggests using a Scikit simple imputer to fill in the median values.
+
+Median housing values: `[-118.51     34.26     29.     2125.      434.     1167.      408.
+    3.5385]`
+
+##### Transforming Categorical & Text Values
+
+Similarly, categorical values like those in the ocean_proximity column need to be encoded as numerical values.
+
+|                 |   count |
+|:----------------|--------:|
+| ('<1H OCEAN',)  |    7274 |
+| ('INLAND',)     |    5301 |
+| ('NEAR OCEAN',) |    2089 |
+| ('NEAR BAY',)   |    1846 |
+| ('ISLAND',)     |       2 |
+
+Finally, those values need to be mapped to column data with binary values. For each unique value in the categorical data, a column will be added. For one-hot column values, the original ocean_proximity will be mapped to a 1 for the column that matches its value (true) and a 0 for all others (false). In the example below, an entity that is ocean_proximity: SPAM, will have the value 00001.
+
+|    |   ocean_proximity_FooBar |   ocean_proximity_Ham |   ocean_proximity_INLAND |   ocean_proximity_NEAR BAY |   ocean_proximity_SPAM |
+|---:|-------------------------:|----------------------:|-------------------------:|---------------------------:|-----------------------:|
+|  0 |                        0 |                     0 |                        1 |                          0 |                      0 |
+|  1 |                        0 |                     0 |                        0 |                          1 |                      0 |
+|  2 |                        1 |                     0 |                        0 |                          0 |                      0 |
+|  3 |                        0 |                     0 |                        0 |                          0 |                      1 |
+|  4 |                        0 |                     1 |                        0 |                          0 |                      0 |
+
+#### Feature Scaling
+
+Most ML algorithms don't perform well when the the input attributes have very different scales. 
+
+**CAUTION:** Only ever scale training data. Train a scaler and then us it transform other data sets including the validation set! 
+
+I'm not sure why this caution exists, but the author makes a big deal of this.
+
+Some strategies:
+
+* Min-Max (normalizatio) scaling: map the values, in whatever their range, to floats between 0 and 1 or -1 and 1 (useful for Neural Networks that prefer zero mean data)
+  * I imagine that if you have extreme outliers, this will totally fubar up your scaling
+  * Skewed data with a long tail impacts this method 
+* Standardization: subtracts the mean value pushing values close to the mean to zero and then divides the result by the standard deviation. 
+  * This is less impacted by outliers, but long tail skew can squash out the bulk of the data into a small range
+
+For both of these methods, transform it to shrink the tail and make the distribution symmetrical where possible.
+
+We can take advantage of SciKit's StandardScalar transformer to do this reliably and shift all the values to a range between -2 and 2.
+
+Numerical Values from housing data prior to scaling:
+
+|    |   longitude |   latitude |   housing_median_age |   total_rooms |   total_bedrooms |   population |   households |   median_income |
+|---:|------------:|-----------:|---------------------:|--------------:|-----------------:|-------------:|-------------:|----------------:|
+|  0 |     -122.42 |      37.8  |                   52 |          3321 |             1115 |         1576 |         1034 |          2.0987 |
+|  1 |     -118.38 |      34.14 |                   40 |          1965 |              354 |          666 |          357 |          6.0876 |
+|  2 |     -121.98 |      38.36 |                   33 |          1083 |              217 |          562 |          203 |          2.433  |
+|  3 |     -117.11 |      33.75 |                   17 |          4174 |              851 |         1845 |          780 |          2.2618 |
+|  4 |     -118.15 |      33.77 |                   36 |          4366 |             1211 |         1912 |         1172 |          3.5292 |
+|  5 |     -121.31 |      37.96 |                   52 |          1829 |              301 |          694 |          319 |          3.3466 |
+|  6 |     -118.36 |      33.85 |                   34 |          1086 |              197 |          509 |          158 |          6.1133 |
+|  7 |     -122.13 |      37.41 |                   36 |          4787 |              900 |         2039 |          890 |          5.4063 |
+|  8 |     -118.44 |      34.31 |                   22 |          3182 |              822 |         2661 |          746 |          2.7472 |
+|  9 |     -118.13 |      34.06 |                   17 |          1714 |              572 |         1590 |          568 |          1.1875 |
+
+After scaling (as np array):
+
+```TXT
+[-1.42303652  1.0136059   1.86111875  0.31191221  1.36816703  0.13746004   1.39481249 -0.93649149]
+[ 0.59639445 -0.702103    0.90762971 -0.30861991 -0.43592476 -0.69377062  -0.37348471  1.17194198]
+[-1.2030985   1.27611874  0.35142777 -0.71224036 -0.76070869 -0.78876841  -0.77572662 -0.75978881]
+[ 1.23121557 -0.88492444 -0.91989094  0.70226169  0.74230601  0.38317548   0.73137454 -0.85028088]
+[ 0.71136206 -0.87554898  0.58980003  0.79012465  1.59575285  0.44437597   1.75526303 -0.18036472]
+[-0.86819286  1.08860957  1.86111875 -0.37085617 -0.5615711  -0.66819429  -0.47273921 -0.27688255]
+[ 0.60639163 -0.83804715  0.43088519 -0.7108675  -0.8081224  -0.83718074  -0.89326484  1.18552636]
+[-1.27807737  0.83078446  0.58980003  0.98278248  0.85846961  0.56038289   1.01869019  0.81182372]
+[ 0.5664029  -0.6224116  -0.52260385  0.24830309  0.67355613  1.12854275   0.64256789 -0.5937105 ]
+[ 0.72135924 -0.73960483 -0.91989094 -0.42348242  0.08088472  0.1502482    0.17763893 -1.41812918]
+```
+
+### 12 November, 2024
+
+#### Custom Transformers
+
+If you don't find just the right transformer, you can write your own class. As long as the class suports `fit` and `transform` methods, it will work. This is great if you really know what you're looking for because you can use pretty much functions or methods you can get your hands on. The diagram below (borrowed from the author's notebooks) is generated using a custom built transformer class. I don't entirely understand how it works, but I see the general outlines of how it was built. It's also possible to specify inverse functions so it's easy to work with the predictions and match them with the labeled data.
+
+```Python
+class ClusterSimilarity(BaseEstimator, TransformerMixin):
+    def __init__(self, n_clusters=10, gamma=1.0, random_state=None):
+        self.n_clusters = n_clusters
+        self.gamma = gamma
+        self.random_state = random_state
+
+    def fit(self, X, y=None, sample_weight=None):
+        self.kmeans_ = KMeans(self.n_clusters, n_init=10,
+                              random_state=self.random_state)
+        self.kmeans_.fit(X, sample_weight=sample_weight)
+        return self  # always return self!
+
+    def transform(self, X):
+        return rbf_kernel(X, self.kmeans_.cluster_centers_, gamma=self.gamma)
+    
+    def get_feature_names_out(self, names=None):
+        return [f"Cluster {i} similarity" for i in range(self.n_clusters)]
+```
+
+![k-Means Clustering](./assets/homl_ch02_custom_transformer_k-means.png)
+
+#### Transformation Pipelines
+
+Processing data can potentially take tens of steps to prepare prior to doing any sort of classification task. Fortunately, SciKit has a `pipeline` class that allows defining a set of steps to take on a particular feature set. It's as easy as defining the variable and adding an array of tuples that define a name and each step.
+
+I have to assume that this is working as expected because a lot of this is over my head. My results match the author's, but that's be best confirmation I can arrive at at this point.
+
+```Python
+from sklearn.pipeline import Pipeline
+
+num_pipeline = Pipeline([
+    ("impute", SimpleImputer(strategy="median")),
+    ("standardize", StandardScaler()),
+])
+num_pipeline
+```
+
+SciKit also provides a great pipeline visualization tool that allows easy inspection of pipeline objects.
+
+```Python
+import sklearn
+sklearn.set_config(display="diagram")
+```
+
+![num_pipeline diagram](./assets/homl_ch02_pipeline_diagram.png)
+
+The code below was borrowed from the author's notebooks, pulled together to show the entire process and annotated to show the various steps that do the following steps. Several data pipeline steps are specifically noted [A..E].
+
+- Download the dataset
+- add the `income_cat` feature and then split the data into stratified train/test sets
+- remove the `income_cat` column
+- Create pipeline with the following properties
+  - (A) impute missing values
+  - (B) encode categorical data as binary one-hot columns
+  - (C\) create ratio features
+  - (D) cluster similarity features
+  - (E) transform "long-tail" data into more gaussian (normal) distributions
+
+```Python
+from pathlib import Path
+import pandas as pd
+from pandas.plotting import scatter_matrix
+import tarfile
+import urllib.request
+
+import numpy as np
+from sklearn.compose import ColumnTransformer
+from sklearn.compose import make_column_selector, make_column_transformer
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.pipeline import make_pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler #, OrdinalEncoder
+from sklearn.model_selection import train_test_split
+
+
+
+from sklearn.cluster import KMeans
+
+def load_housing_data():
+    tarball_path = Path("datasets/housing.tgz")
+    if not tarball_path.is_file():
+        Path("datasets").mkdir(parents=True, exist_ok=True)
+        url = "https://github.com/ageron/data/raw/main/housing.tgz"
+        urllib.request.urlretrieve(url, tarball_path)
+        with tarfile.open(tarball_path) as housing_tarball:
+            housing_tarball.extractall(path="datasets")
+    return pd.read_csv(Path("datasets/housing/housing.csv"))
+
+class ClusterSimilarity(BaseEstimator, TransformerMixin):
+    def __init__(self, n_clusters=10, gamma=1.0, random_state=None):
+        self.n_clusters = n_clusters
+        self.gamma = gamma
+        self.random_state = random_state
+
+    def fit(self, X, y=None, sample_weight=None):
+        self.kmeans_ = KMeans(self.n_clusters, n_init=10,
+                              random_state=self.random_state)
+        self.kmeans_.fit(X, sample_weight=sample_weight)
+        return self  # always return self!
+
+    def transform(self, X):
+        return rbf_kernel(X, self.kmeans_.cluster_centers_, gamma=self.gamma)
+    
+    def get_feature_names_out(self, names=None):
+        return [f"Cluster {i} similarity" for i in range(self.n_clusters)]
+
+def column_ratio(X):
+    return X[:, [0]] / X[:, [1]]
+
+def ratio_name(function_transformer, feature_names_in):
+    return ["ratio"]  # feature names out
+
+def ratio_pipeline():
+    return make_pipeline(
+        SimpleImputer(strategy="median"), # (A) impute missing values
+        FunctionTransformer(column_ratio, feature_names_out=ratio_name), # (C) Create ratio features
+        StandardScaler()) # (F) scale all the values
+
+# load unprocessed data
+housing = load_housing_data()
+
+# add an income_cat column
+housing["income_cat"] = pd.cut(housing["median_income"], 
+                               bins=[0., 1.5, 3.0, 4.5, 6., np.inf], 
+                               labels=[1, 2, 3, 4, 5])
+# split into stratified train/test split
+# train_set, test_set = train_test_split(housing, test_size=0.2, random_state=42)
+
+strat_train_set, strat_test_set = train_test_split(
+    housing,
+    test_size=0.2,
+    stratify=housing["income_cat"],
+    random_state=42)
+
+# drop the income-cat column
+for set_ in (strat_test_set, strat_train_set):
+    set_.drop("income_cat", axis=1, inplace=True)
+
+
+housing_labels = strat_train_set["median_house_value"].copy()
+
+# WHOA! PAY ATTENTION HERE!
+housing = strat_train_set.drop("median_house_value", axis=1)
+
+cat_pipeline = make_pipeline(
+    SimpleImputer(strategy="most_frequent"), # (A) impute missing values
+    OneHotEncoder(handle_unknown="ignore")) # (B) encode categorical data as binary one-hot columns
+
+
+# (E) transform "long-tail" data into more gaussian (normal) distributions
+log_pipeline = make_pipeline(
+    SimpleImputer(strategy="median"), #(A) impute missing values
+    FunctionTransformer(np.log, feature_names_out="one-to-one"),
+    StandardScaler()) # (F) scale all the values
+cluster_simil = ClusterSimilarity(n_clusters=10, gamma=1., random_state=42)
+default_num_pipeline = make_pipeline(SimpleImputer(strategy="median"), # (A) impute missing values
+                                     StandardScaler()) # (F) scale all the values
+preprocessing = ColumnTransformer([
+        ("bedrooms", ratio_pipeline(), ["total_bedrooms", "total_rooms"]),
+        ("rooms_per_house", ratio_pipeline(), ["total_rooms", "households"]),
+        ("people_per_house", ratio_pipeline(), ["population", "households"]),
+        ("log", log_pipeline, ["total_bedrooms", "total_rooms", "population",
+                               "households", "median_income"]),
+        ("geo", cluster_simil, ["latitude", "longitude"]),
+        ("cat", cat_pipeline, make_column_selector(dtype_include=object)),
+    ],
+    remainder=default_num_pipeline)  # one column remaining: housing_median_age
+```
+
+#### Feedback for the Author
+
+Pulling this together was really challenging because the code is scattered throughout the book and all over the provided notebook. I find the author's inconsistent use of variable names (reassignments without note) very challenging as well. You'll notice that in the example above, `housing` starts its life as the complete unprocessed data pulled from a tarball. Then `housing` is split into stratified train/test sets. A few steps later, housing is reassigned to reference the training set. 
+
+An incautious read of the code would lead you to believe that the raw housing data is being fed directly into the pipeline and prepared for training in the later parts of the chapter. That's not the case! On line 85 of the code above (`WHOA! PAY ATTENION`), `housing` is reassigned.
+
+I've written a few pieces of feedback for the author on this point. See issues [#167](https://github.com/ageron/handson-ml3/issues/167) and [#168](https://github.com/ageron/handson-ml3/issues/168) on GitHub for the full suggestion.
+
+#### Chapter 2 Pause
+
+I'm pretty frustrated at this point and feel like a need a break. I'm going to move over to some other learning tasks that I have been meaning to do for some time. I might loop back around to this again later in the week once my frustration subsides a bit.
+
+
+#### SQL
+
+I've decided to take a bit of a break from the *HOML* book and move on to completing some SQL courses on DataCamp. My knowledge of SQL up to this point is primarily of PL/SQL and it's all self taught through necessity at a previous job. We were implementing D2L Brightspace on our campus and needed to connect it to our backend Student Information System (SIS) so we could provide students and teachers appropriate access to their courses. 
+
+The SIS only spoke PL/SQL and I was the only person who was trained on D2L Admin, so I quickly picked up some skills. I think I probably have a lot of bad habits and gaps in my understanding. I'm going to use the next few days to bolster my SQL skills.
+
+##### Introduction to SQL
+
+![Intro to SQL Certificate](./assets/DataCamp_intro_to_SQL.pdf.png)
+
+This was all good review. Nothing new in this section for me, but it's reassuring to know that I don't have any major gaps in my knowledge when it comes to the basics.
+
+##### Intermediate SQL
+
+![Intermediate SQL](./assets/DataCamp_intermediate_SQL.pdf.png)
+
+This section was also excellent review. The review of the aggregation and grouping functions was really useful. I never learned that very well. 
+
+##### Joining Data in SQL
+
+![Joining Data in SQL](./assets/DataCamp_intermediate_SQL.pdf.png)
+
+This was excellent. I had no idea there was anything beyond left, right and inner joins. Learning about cross and self joins was helpful. The subquery practice was also super helpful. I've borrowed from stack overflow plenty with sub queries, but now I feel confident that I can apply this skill in other contexts.
