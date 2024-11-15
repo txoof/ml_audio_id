@@ -74,7 +74,7 @@ These challenges were selected because they are relevant to future work in the f
 | | |Not started|evaluate | |
 |11/13/2024|4 |Completed |Taking a break from ML to do some SQL on Datacamp |completed 2 modules and started a third |
 |11/13/2024|3 |Completed |Joining Data in SQL |a lot of new concepts here for me! This was great learning |
-|11/15/2024|4 |Not started|Data Manipulation in SQL | |
+| | |Not started|Data Manipulation in SQL | |
 |11/15/2024|2 |Completed |Write final report on progress | |
 
 
