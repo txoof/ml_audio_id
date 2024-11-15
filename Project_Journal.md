@@ -271,7 +271,7 @@ The script will be useful for setting up future Python projects and can be impor
 
 #### Chapter 1
 
-Key points: 
+Key points:
 
 - ML is essentially teaching computers by example from data.
 - ML really shines for tasks that are complex and are too difficult to define through hand-crafted rules
@@ -382,6 +382,8 @@ Comparing the stratified test set versus a randomly split test set.
 |                 5 |       11.44 |          11.43 |      12.09 |            -0.08 |            5.63 |
 
 The differences between the randomized and stratified sets are are significant and meaningful in all the categories.
+
+## Week 2
 
 ### 11 November, 2024
 
@@ -705,8 +707,9 @@ I've written a few pieces of feedback for the author on this point. See issues [
 
 I'm pretty frustrated at this point and feel like a need a break. I'm going to move over to some other learning tasks that I have been meaning to do for some time. I might loop back around to this again later in the week once my frustration subsides a bit.
 
+### 13 November, 2024
 
-#### SQL
+#### SQL Refresher
 
 I've decided to take a bit of a break from the *HOML* book and move on to completing some SQL courses on DataCamp. My knowledge of SQL up to this point is primarily of PL/SQL and it's all self taught through necessity at a previous job. We were implementing D2L Brightspace on our campus and needed to connect it to our backend Student Information System (SIS) so we could provide students and teachers appropriate access to their courses. 
 
@@ -717,6 +720,8 @@ The SIS only spoke PL/SQL and I was the only person who was trained on D2L Admin
 ![Intro to SQL Certificate](./assets/DataCamp_intro_to_SQL.pdf.png)
 
 This was all good review. Nothing new in this section for me, but it's reassuring to know that I don't have any major gaps in my knowledge when it comes to the basics.
+
+
 
 ##### Intermediate SQL
 
@@ -729,3 +734,7 @@ This section was also excellent review. The review of the aggregation and groupi
 ![Joining Data in SQL](./assets/DataCamp_intermediate_SQL.pdf.png)
 
 This was excellent. I had no idea there was anything beyond left, right and inner joins. Learning about cross and self joins was helpful. The subquery practice was also super helpful. I've borrowed from stack overflow plenty with sub queries, but now I feel confident that I can apply this skill in other contexts.
+
+### 15 November, 2024
+
+#### SQL Continued

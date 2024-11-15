@@ -3,10 +3,9 @@
 Use Machine Learning to positively identify if an audio clip includes music.
 
 - [Project Details](#project-details)
-- [Project Journal](#project-journal)
+- [Project Journal and Report](#project-journal-and-report)
 - [Scripts Generated for this Project](#scripts-generated-for-this-project)
   - [Pre-Processing](#pre-processing)
-    - ['classify\_mp3.py](#classify_mp3py)
   - [Utilities](#utilities)
 
 ## Project Details
@@ -48,9 +47,10 @@ The project duration is two weeks, broken down as follows:
 
 This project supports personal growth by enhancing skills related to AI, data science, and self-directed research. It offers hands-on experience with machine learning algorithms and showcases the development of a solution with direct connection to the program.
 
-## Project Journal
+## Project Journal and Report
 
-Daily details of progress and steps taken can be found in the [Project_Journal.md](./Project_Journal.md)
+Daily details of progress and steps taken can be found in the [Project_Journal.md](./Project_Journal.md). 
+A summary of learning can be found in the [Project Report](./Challenge_Project_Report.md)
 
 ## Scripts Generated for this Project
 
